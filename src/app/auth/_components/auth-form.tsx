@@ -13,11 +13,22 @@ import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { signIn } from "next-auth/react";
 import { toast } from "@/components/ui/use-toast";
+import { NextRequest, NextResponse } from "next/server";
+import { usePathname } from "next/navigation";
+import { getUrl } from "@/lib/getUrl";
 
 export function AuthForm() {
+  const patnName = usePathname();
+  const token = new NextRequest(getUrl(patnName)).cookies.get(
+    "authjs.session-token"
+  );
   const authForm = useForm();
 
   const handleSubmit = authForm.handleSubmit(async (data) => {
+    if (patnName === "/auth" && token) {
+      return NextResponse.redirect(new URL(getUrl("/app")));
+    }
+
     try {
       await signIn("email", {
         email: data.email,
@@ -26,13 +37,13 @@ export function AuthForm() {
       toast({
         title: "Check your email",
         description: "We sent you a magic link. Please check your email.",
-      })
+      });
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Error",
         description: "Something went wrong. Please try again.",
-      })
+      });
     }
   });
 
